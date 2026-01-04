@@ -17,7 +17,7 @@ exports.sendEmergencyEmail = (contact, trip, type) => {
     const mailOptions = {
         from: '"SoloSafe Emergency" <alerts@solosafe.com>',
         to: contact.email,
-        subject: `🚨 ${type}: ${trip.userId.name} needs assistance`,
+        subject: `${type}: ${trip.userId.name} needs assistance`,
         html: `
             <h2>SoloSafe Emergency Alert</h2>
             <p>This is an automated alert for <strong>${trip.userId.name}</strong>.</p>

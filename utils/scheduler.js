@@ -15,7 +15,7 @@ module.exports = (io, injectedTrip) => {
             } else {
                 // 2. FALLBACK: IF MISSING, FORCE LOAD THE FILE
                 // This fixes 'MissingSchemaError' by forcing Node to read the blueprint file.
-                console.log("⚠️ Model missing. Force-loading file...");
+                console.log("Model missing. Force-loading file...");
                 try {
                     // Try getting it from Mongoose memory first
                     Trip = mongoose.model('Trip');
