@@ -1,29 +1,11 @@
+const Trip = require('../models/Trip');
 const cron = require('node-cron');
-const mongoose = require('mongoose'); // Import mongoose library instead of the file
 const { sendEmergencyEmail, sendEmergencyMessage, sendPushNotification } = require('./message');
 
 
-// This runs every minute [cite: 102]
-module.exports = (io, injectedTrip) => {
+// This runs every MINUTE [cite: 102]
     cron.schedule('* * * * *', async () => {
         try {
-            let Trip;
-
-            // 1. Check if the model passed from server.js works
-            if (injectedTrip && injectedTrip.find) {
-                Trip = injectedTrip;
-            } else {
-                // 2. FALLBACK: IF MISSING, FORCE LOAD THE FILE
-                // This fixes 'MissingSchemaError' by forcing Node to read the blueprint file.
-                console.log("Model missing. Force-loading file...");
-                try {
-                    // Try getting it from Mongoose memory first
-                    Trip = mongoose.model('Trip');
-                } catch (error) {
-                    // If that fails, REQUIRE the file to register it
-                    Trip = require('../models/Trip');
-                }
-            }
             const now = new Date();
             
             // Find travelers who missed their check-in time and haven't clicked "I'm Safe" [cite: 53, 54]
@@ -39,7 +21,7 @@ module.exports = (io, injectedTrip) => {
                 // Send Email to each emergency contact [cite: 55, 56]
                 trip.emergencyContacts.forEach(contact => {
                     // Logic to trigger email via Nodemailer goes here
-                    sendEmergencyEmail(contact, trip, "MISSING CHECK-IN");
+                    sendEmergencyEmail(contact.email, trip, "MISSING CHECK-IN");
                     console.log(`Alert sent to ${contact.email} for ${trip.userId.name}`);
                 });
                 // Send SMS to each emergency contact via Twilio [cite: 57, 58]
@@ -56,9 +38,32 @@ module.exports = (io, injectedTrip) => {
                         `${trip.userId.name} has missed their check-in. Please check your email/SMS for details.`
                     );
                 }
+                console.log(`Missed check-in alerts processed for trip ID: ${trip._id}`);
             }
+            console.log(`Missed check-in mail alert cron job executed at ${now.toISOString()}`);
         } catch (error) {
             console.error("Error in missed check-in mail alert cron job:", error);
         }   
     });
-};
+
+
+
+
+// const cron = require('node-cron');
+// const Trip = require('../models/Trip');
+
+// // Runs every hour to check for missed check-ins
+// cron.schedule('0 * * * *', async () => {
+//     const now = new Date();
+//     const activeTrips = await Trip.find({ status: 'Safe' });
+
+//     for (let trip of activeTrips) {
+//         const hoursDiff = (now - trip.lastCheckIn) / (1000 * 60 * 60);
+//         if (hoursDiff > trip.checkInFrequency) {
+//             trip.status = 'Missed Check-in';
+//             await trip.save();
+//             // Trigger email service to alert contacts
+//             console.log(`ALERT: User ${trip.userId} missed their check-in!`);
+//         }
+//     }
+// });

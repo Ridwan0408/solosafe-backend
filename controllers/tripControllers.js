@@ -1,5 +1,19 @@
 const Trip = require('../models/Trip');
 
+// Handle manual check-in
+exports.checkIn = async (req, res) => {
+  try {
+    const trip = await Trip.findOneAndUpdate(
+      { userId: req.user.id, status: { $ne: 'SOS' } },
+      { lastCheckIn: Date.now(), status: 'Safe' },
+      { new: true }
+    );
+    res.json({ message: "Check-in successful", trip });
+  } catch (err) {
+    res.status(500).send('Server Error');
+  }
+};
+
 exports.createTrip = async (req, res) => {
     try {
         const { destination, startDate, endDate, accommodation, checkInFrequency, emergencyContacts } = req.body;
@@ -12,7 +26,7 @@ exports.createTrip = async (req, res) => {
 
         // 2. Calculate the first check-in time based on frequency (e.g., 8 or 24 hours) [cite: 51]
         const firstCheckIn = new Date();
-        firstCheckIn.setHours(firstCheckIn.getHours() + parseInt(checkInFrequency));
+        firstCheckIn.setMinutes(firstCheckIn.getMinutes() + parseInt(checkInFrequency));
 
         // 3. Create the trip [cite: 26, 38]
         const newTrip = await Trip.create({
@@ -28,7 +42,7 @@ exports.createTrip = async (req, res) => {
 
         res.status(201).json(newTrip);
     } catch (err) {
-        res.status(500).json({ error: "Failed to create trip" });
+        res.status(500).json({ error: "Failed to create trip", message: err.message });
     }
 };
 
@@ -97,7 +111,7 @@ exports.confirmSafety = async (req, res) => {
 
         // 2. Calculate the NEW next check-in time [cite: 51]
         const newCheckIn = new Date();
-        newCheckIn.setHours(newCheckIn.getHours() + trip.checkInFrequency);
+        newCheckIn.setMinutes(newCheckIn.getMinutes() + trip.checkInFrequency);
 
         // 3. Reset status and update the time 
         trip.nextCheckIn = newCheckIn;

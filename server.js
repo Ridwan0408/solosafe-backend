@@ -4,11 +4,15 @@ const connectDB = require('./config/db');
 const http = require('http');
 const session = require('express-session');
 const { Server } = require('socket.io');
-const schedule = require('./utils/scheduler');
 const MongoStore = require('connect-mongo').default;
 const methodOverride = require('method-override');
 const helmet = require('helmet');
-const Trip = require('./models/Trip');
+const passport = require('passport');
+
+
+require('./config/passport');
+require('./utils/scheduler');
+const locationSync = require('./utils/locationSync');
 
 // Initialize app
 const app = express();
@@ -19,25 +23,26 @@ connectDB();
 
 // Initialize Socket.io
 const io = new Server(server, {
-    cors: { origin: "*" } // Allows the mobile app to connect
+    cors: { origin: "*" } // replace "*" with your frontend URL in production
 });
+// Socket.io connection
+io.on("connection", () => {
+    console.log("Socket.IO connection detected");
+});
+locationSync(io);
 
-// Initialize Socket Logic
-schedule(io, Trip);
 
 // Middleware
 app.use(helmet());
 app.use(express.urlencoded({ extended: false }));
-app.use(methodOverride('_method'));
 app.use(express.json());
+app.use(methodOverride('_method'));
 
 // Session middleware
-console.log(typeof MongoStore, MongoStore);
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    // Enable when ready
     store: MongoStore.create({ 
         mongoUrl: process.env.MONGO_URI })
 }));
@@ -48,6 +53,10 @@ app.use((req, res, next) => {
     next();
 });
 
+app.use(passport.initialize());
+app.use(passport.session());
+
+
 // ROUTES
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/trips', require('./routes/tripRoutes'));
@@ -55,6 +64,7 @@ app.use('/api/alerts', require('./routes/alertRoutes'));
 
 
 app.get('/', (req, res) => res.send('SoloSafe API is running...'));
+
 // Start server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {

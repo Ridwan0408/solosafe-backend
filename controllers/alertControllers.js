@@ -1,9 +1,9 @@
 const Trip = require('../models/Trip');
-const { sendEmergencyEmail, sendEmergencyMessage, sendPushNotification} = require('../utils/message');
+const { sendEmergencyEmailWithLoacation, sendEmergencyMessageWithLocation, sendPushNotification} = require('../utils/message');
 
 exports.triggerSOS = async (req, res) => {
     try {
-        const { tripId, location } = req.body; // Location is optional for MVP [cite: 63]
+        const { tripId, latitude, longitude } = req.body; // Received from browser geolocation API
 
         const trip = await Trip.findById(tripId).populate('userId');
 
@@ -11,18 +11,22 @@ exports.triggerSOS = async (req, res) => {
 
         // Update status to Emergency 
         trip.status = 'SOS';
-        if (location) trip.lastKnownLocation = location;
+        trip.lastKnownLocation.lat = latitude; // storing for record-keeping
+        trip.lastKnownLocation.lng = longitude; // storing for record-keeping
         await trip.save();
+
+        // Construct location link for the alerts 
+        const mapLink = latitude ? `https://www.google.com/maps?q=${latitude},${longitude}` : 'Not available';
 
         // Immediate email to all emergency contacts [cite: 64]
 
         trip.emergencyContacts.forEach(contact => {
-            sendEmergencyEmail(contact, trip, "SOS ALERT");
-            sendEmergencyMessage(contact.phone, trip, "SOS ALERT");
+            sendEmergencyEmailWithLoacation(contact, trip, "SOS ALERT", mapLink);
+            sendEmergencyMessageWithLocation(contact.phone, trip, "SOS ALERT", mapLink);
             console.log(`SOS Alert sent to ${contact.email} and ${contact.phone} for ${trip.userId.name}`);
 
             // Push Notification if FCM token exists [cite: 65]
-            
+        
             if (trip.userId.fcmToken) {
                 sendPushNotification(
                     trip.userId.fcmToken,
@@ -34,7 +38,7 @@ exports.triggerSOS = async (req, res) => {
 
         res.status(200).json({ message: "Emergency alert sent successfully." });
     } catch (error) {
-        res.status(500).json({ error: "Failed to process SOS" });
+        res.status(500).json({ error: "Failed to process SOS", message: error.message });
     }
 };
 exports.cancelSOS = async (req, res) => {

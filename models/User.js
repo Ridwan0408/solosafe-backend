@@ -10,7 +10,12 @@ const UserSchema = new mongoose.Schema({
     phone: { type: String, required: true },
     email: { type: String, required: true }
   }],
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  fcmToken: { type: String, default: null }, // Stores the phone's unique ID
+  password: { type: String, required: function() { return !this.googleId; } }, // Optional if using Google
+  googleId: { type: String, unique: true, sparse: true },
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
 });
 
 // Hash password before saving to the database
