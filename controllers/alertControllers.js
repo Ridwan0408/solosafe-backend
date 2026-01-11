@@ -1,4 +1,5 @@
 const Trip = require('../models/Trip');
+const geoCoder = require('../utils/geoCoder');
 const { sendEmergencyEmailWithLoacation, sendEmergencyMessageWithLocation, sendPushNotification} = require('../utils/message');
 
 exports.triggerSOS = async (req, res) => {
@@ -8,6 +9,17 @@ exports.triggerSOS = async (req, res) => {
         const trip = await Trip.findById(tripId).populate('userId');
 
         if (!trip) return res.status(404).json({ message: "Trip not found" });
+
+        // Reverse geocode to get precise address
+        let preciseAddress = 'Location not available';
+        if (latitude && longitude) {
+            try {
+                const loc = await geoCoder.getAddress(latitude, longitude);
+                preciseAddress = loc;
+            } catch (error) {
+                console.error("Error reverse geocoding:", error);
+            }
+        }
 
         // Update status to Emergency 
         trip.status = 'SOS';
@@ -21,8 +33,8 @@ exports.triggerSOS = async (req, res) => {
         // Immediate email to all emergency contacts [cite: 64]
 
         trip.emergencyContacts.forEach(contact => {
-            sendEmergencyEmailWithLoacation(contact, trip, "SOS ALERT", mapLink);
-            sendEmergencyMessageWithLocation(contact.phone, trip, "SOS ALERT", mapLink);
+            sendEmergencyEmailWithLoacation(contact, trip, "SOS ALERT", mapLink, preciseAddress);
+            sendEmergencyMessageWithLocation(contact.phone, trip, "SOS ALERT", mapLink, preciseAddress);
             console.log(`SOS Alert sent to ${contact.email} and ${contact.phone} for ${trip.userId.name}`);
 
             // Push Notification if FCM token exists [cite: 65]
@@ -36,7 +48,7 @@ exports.triggerSOS = async (req, res) => {
             }
         });
 
-        res.status(200).json({ message: "Emergency alert sent successfully." });
+        res.status(200).json({ message: "Emergency alert sent successfully.", address: preciseAddress});
     } catch (error) {
         res.status(500).json({ error: "Failed to process SOS", message: error.message });
     }

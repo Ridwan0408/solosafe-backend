@@ -113,7 +113,7 @@ exports.sendResetEmail = async (user, type, reset) => {
         console.error('Email delivery failed:', error);
     }
 };
-exports.sendEmergencyEmailWithLoacation = async (contact, trip, type, mapLink) => {
+exports.sendEmergencyEmailWithLoacation = async (contact, trip, type, mapLink, address) => {
     const contactsArray = Array.isArray(contact) ? contact : [contact];
     const recipientEmails = contactsArray.map(c => c.email).join(', ');
     const mailOptions = {
@@ -128,6 +128,7 @@ exports.sendEmergencyEmailWithLoacation = async (contact, trip, type, mapLink) =
             <p><strong>Accommodation:</strong> ${trip.accommodation}</p>
             <hr>
             <p>View their full itinerary and last known location here:</p>
+            <p><strong>Precise Location:</strong> ${address}</p>
             <a href="https://solosafe.app/itinerary/${trip._id}">View Shared Itinerary</a>
             <p>click here to view their location: ${mapLink}</p>
             `
@@ -141,12 +142,13 @@ exports.sendEmergencyEmailWithLoacation = async (contact, trip, type, mapLink) =
     }
 };
 
-exports.sendEmergencyMessageWithLocation = async (phone, trip, type, mapLink) => {
+exports.sendEmergencyMessageWithLocation = async (phone, trip, type, mapLink, address) => {
     const formattedPhone = formatPhoneNumber(phone);
     const messageBody = `
         URGENT: ${trip.userId.name} has triggered a ${type} alert on SoloSafe.\n
         Destination: ${trip.destination}\n
-        Accommodation: ${trip.accommodation}\n
+        Accommodation: ${trip.accommodation}\n<p>
+        Address: ${address}\n
         View their itinerary: https://solosafe.app/itinerary/${trip._id}\n
         click here to view their location: ${mapLink}\n`
     try{
