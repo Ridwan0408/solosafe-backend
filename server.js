@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const connectDB = require('./config/db');
 const http = require('http');
 const session = require('express-session');
@@ -33,6 +34,7 @@ locationSync(io);
 
 
 // Middleware
+app.use(cors());
 app.use(helmet());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());

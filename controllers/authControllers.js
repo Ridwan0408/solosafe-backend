@@ -71,7 +71,7 @@ exports.forgotPassword = async (req, res) => {
   await user.save();
 
   // Send email with resetToken (use your existing emailService)
-  const resetUrl = `http://solosafe.com/reset-password/${resetToken}`;
+  const resetUrl = `http://solo-safe.netlify.app/reset-password/${resetToken}`;
   await sendEmail(user.email, "Password Reset", resetUrl);
   res.json({ message: "Reset link sent to email" });
 };
