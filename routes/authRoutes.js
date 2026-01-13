@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const passport = require('passport');
 const { register, login, logout, forgotPassword} = require('../controllers/authControllers');
+const { $where } = require('../models/User');
 
 // @route   POST api/auth/register
 // @desc    Register a new solo traveler
@@ -19,7 +20,7 @@ router.get('/google/callback',
       return res.redirect('/login');
     }
     req.session.userId = req.user._id;
-    res.redirect('/');
+    res.redirect(`${process.env.CLIENT_URL}/dashboard`);
     }); 
   }
 );
