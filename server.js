@@ -22,15 +22,15 @@ const server = http.createServer(app);
 // Database connection
 connectDB();
 
-// Initialize Socket.io
-const io = new Server(server, {
-    cors: { origin: "*" } // replace "*" with your frontend URL in production
-});
-// Socket.io connection
-io.on("connection", () => {
-    console.log("Socket.IO connection detected");
-});
-locationSync(io);
+// // Initialize Socket.io
+// const io = new Server(server, {
+//     cors: { origin: "*" } // replace "*" with your frontend URL in production
+// });
+// // Socket.io connection
+// io.on("connection", () => {
+//     console.log("Socket.IO connection detected");
+// });
+// locationSync(io);
 
 
 // Middleware
