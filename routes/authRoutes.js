@@ -15,12 +15,12 @@ router.route('/google').get(passport.authenticate('google', { scope: ['profile',
 router.get('/google/callback',
   passport.authenticate('google', { failureRedirect: '/login' }),
   (req, res) => {
-    res.session.regenerate(err => {
+    req.session.regenerate(err => {
     if (err) {
       return res.redirect('/login');
     }
     req.session.userId = req.user._id;
-    res.redirect(`${process.env.CLIENT_URL}/dashboard`);
+    res.redirect(`${process.env.CLIENT_URL}`);
     }); 
   }
 );
