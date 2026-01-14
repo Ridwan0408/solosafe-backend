@@ -51,6 +51,15 @@ app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
+    name: 'solosafe.sid',
+    cookie: {
+        secure: false, // Set to true if using HTTPS
+        httpOnly: true,
+        //secure: process.env.NODE_ENV === 'production', // Set to true in production
+        sameSite: 'lax',
+        maxAge: 1000 * 60 * 60 * 24, // 1 day
+        domain: undefined // Set domain if needed
+    },
     store: MongoStore.create({ 
         mongoUrl: process.env.MONGO_URI })
 }));
