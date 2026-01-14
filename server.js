@@ -35,7 +35,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
-    origin: "http://127.0.0.1:5500", // replace with your frontend URL in production
+    origin: "https://52d629a6778f.ngrok-free.app/", // replace with your frontend URL in production
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type"],
@@ -53,7 +53,7 @@ app.use(session({
     saveUninitialized: false,
     name: 'solosafe.sid',
     cookie: {
-        secure: false, // Set to true if using HTTPS
+        secure: true, // Set to true if using HTTPS
         httpOnly: true,
         //secure: process.env.NODE_ENV === 'production', // Set to true in production
         sameSite: 'none',
