@@ -35,8 +35,11 @@ connectDB();
 
 // Middleware
 app.use(cors({
-    origin: "127.0.0.1.5500", // replace with your frontend URL in production
-    credentials: true
+    origin: "http://127.0.0.1:5500", // replace with your frontend URL in production
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type"],
+    exposedHeaders: ["set-cookie"]
 }));
 app.use(helmet());
 app.use(express.urlencoded({ extended: false }));
