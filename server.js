@@ -35,7 +35,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
-    origin: "*",
+    origin: "127.0.0.1.5500", // replace with your frontend URL in production
     credentials: true
 }));
 app.use(helmet());

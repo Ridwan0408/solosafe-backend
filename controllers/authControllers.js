@@ -21,7 +21,15 @@ exports.register = async (req, res) => {
     });
 
     await user.save();
-    res.status(201).json({ message: 'User registered successfully' });
+    res.status(201).json({ 
+      message: 'User registered successfully',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email
+      }
+
+    });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error during registration');
@@ -43,7 +51,13 @@ exports.login = async (req, res) => {
         }
         // Set session
         req.session.userId = user._id;
-        res.status(200).json({ message: 'Login successful' });
+        res.status(200).json({ message: 'Login successful',
+        user: {
+            id: user._id,
+            name: user.name,
+            email: user.email
+          }
+        });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error during login');
@@ -53,7 +67,7 @@ exports.login = async (req, res) => {
 exports.logout = (req, res) => {    
     req.session.destroy(err => {
         if (err) {
-            return res.status(500).json({ message: 'Logout failed' });
+            return res.status(500).json({ message: 'Logout failed'});
         }
         res.clearCookie('connect.sid'); // Clear session cookie
         res.status(200).json({ message: 'Logout successful' });
