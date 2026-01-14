@@ -56,10 +56,13 @@ app.use(session({
         secure: false, // Set to true if using HTTPS
         httpOnly: true,
         //secure: process.env.NODE_ENV === 'production', // Set to true in production
-        sameSite: 'lax',
+        sameSite: 'none',
         maxAge: 1000 * 60 * 60 * 24, // 1 day
+        path: '/',
         domain: undefined // Set domain if needed
     },
+    proxy: true,
+    rolling: true,
     store: MongoStore.create({ 
         mongoUrl: process.env.MONGO_URI })
 }));
