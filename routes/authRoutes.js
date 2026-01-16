@@ -20,7 +20,7 @@ router.get('/google/callback',
       return res.redirect('/login');
     }
     req.session.userId = req.user._id;
-    res.redirect(`${process.env.CLIENT_URL}`);
+    res.redirect(`${process.env.CLIENT_URL}/dashboard.html`);
     }); 
   }
 );

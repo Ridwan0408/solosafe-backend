@@ -69,7 +69,7 @@ exports.sendEmergencyEmail = async (contact, trip, type) => {
         <p><strong>Accommodation:</strong> ${trip.accommodation}</p>
         <hr>
         <p>View their full itinerary here:</p>
-        <a href="https://solosafe.app/itinerary/${trip._id}">View Shared Itinerary</a>
+        <a href="${process.env.CLIENT_URL}/public/${trip._id}">View Shared Itinerary</a>
     `;
 
     await sendMailjetEmail(recipientEmails, `URGENT: ${type}: ${trip.userId.name} needs assistance`, html);
@@ -82,7 +82,7 @@ exports.sendEmergencyMessage = async (phone, trip, type) => {
         URGENT: ${trip.userId.name} has triggered a ${type} alert on SoloSafe.
         Destination: ${trip.destination}
         Accommodation: ${trip.accommodation}
-        View their itinerary: https://solosafe.app/itinerary/${trip._id}`;
+        View their itinerary: ${process.env.CLIENT_URL}/public/${trip._id}`;
     try{        
         await twilioClient.messages.create({
             body: messageBody,
@@ -131,7 +131,7 @@ exports.sendEmergencyEmailWithLocation = async (contact, trip, type, mapLink, ad
         <p><strong>Precise Location:</strong> ${address}</p>
         <hr>
         <a href="${mapLink}">View Current Location on Maps</a><br><br>
-        <a href="https://solosafe.app/itinerary/${trip._id}">View Shared Itinerary</a>
+        <a href="${process.env.CLIENT_URL}/public/${trip._id}">View Shared Itinerary</a>
     `;
 
     await sendMailjetEmail(recipientEmails, `URGENT: ${type}: ${trip.userId.name} needs assistance`, html);
@@ -144,7 +144,7 @@ exports.sendEmergencyMessageWithLocation = async (phone, trip, type, mapLink, ad
         Destination: ${trip.destination}\n
         Accommodation: ${trip.accommodation}\n<p>
         Address: ${address}\n
-        View their itinerary: https://solosafe.app/itinerary/${trip._id}\n
+        View their itinerary: ${process.env.CLIENT_URL}/public/${trip._id}\n
         click here to view their location: ${mapLink}\n`
     try{
         await twilioClient.messages.create({
@@ -158,4 +158,3 @@ exports.sendEmergencyMessageWithLocation = async (phone, trip, type, mapLink, ad
         console.error('SMS delivery failed:', error);
     }
 };
-
