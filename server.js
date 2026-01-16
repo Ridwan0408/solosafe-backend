@@ -35,7 +35,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
-    origin: "https://52d629a6778f.ngrok-free.app", // replace with your frontend URL in production
+    origin: process.env.CLIENT_URL, 
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type"],
