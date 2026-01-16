@@ -21,8 +21,15 @@ router.get('/google/callback',
     }
     req.session.userId = req.user._id;
     res.redirect(`${process.env.CLIENT_URL}/dashboard.html`);
+    res.status(200).json({ message: 'Login successful',
+      user: {
+          id: req.user._id,
+          name: req.user.name,
+          email: req.user.email
+        }
     }); 
   }
 );
+  });
 
 module.exports = router;
