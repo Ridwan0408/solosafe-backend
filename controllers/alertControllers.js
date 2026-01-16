@@ -1,6 +1,6 @@
 const Trip = require('../models/Trip');
 const geoCoder = require('../utils/geoCoder');
-const { sendEmergencyEmailWithLoacation, sendEmergencyMessageWithLocation, sendPushNotification} = require('../utils/message');
+const { sendEmergencyEmailWithLocation, sendEmergencyMessageWithLocation, sendPushNotification} = require('../utils/message');
 
 exports.triggerSOS = async (req, res) => {
     try {
@@ -33,7 +33,7 @@ exports.triggerSOS = async (req, res) => {
         // Immediate email to all emergency contacts [cite: 64]
 
         trip.emergencyContacts.forEach(contact => {
-            sendEmergencyEmailWithLoacation(contact, trip, "SOS ALERT", mapLink, preciseAddress);
+            sendEmergencyEmailWithLocation(contact, trip, "SOS ALERT", mapLink, preciseAddress);
             sendEmergencyMessageWithLocation(contact.phone, trip, "SOS ALERT", mapLink, preciseAddress);
             console.log(`SOS Alert sent to ${contact.email} and ${contact.phone} for ${trip.userId.name}`);
 

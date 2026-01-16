@@ -1,24 +1,15 @@
-const nodemailer = require('nodemailer');
-const sgMail = require('@sendgrid/mail');
+const Mailjet = require('node-mailjet');
 const Twilio = require('twilio');
 const admin = require('../config/firebase');
 
-//sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-// Configure Nodemailer transporter
-const transporter = nodemailer.createTransport({
-    service: 'gmail', // Or your preferred email provider
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
-});
+
+// Configure Mailjet with your API Keys
+const mailjet = Mailjet.apiConnect(
+    process.env.MJ_APIKEY_PUBLIC,
+    process.env.MJ_APIKEY_PRIVATE
+);
 // Configure Twilio client
 const twilioClient = new Twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH_TOKEN);
-console.log('EMAIL_USER:', process.env.EMAIL_USER);
-console.log('EMAIL_PASS exists:', !!process.env.EMAIL_PASS);
 
 // Helper function to format phone numbers in E.164
 const formatPhoneNumber = (phone) => {
@@ -34,31 +25,56 @@ const formatPhoneNumber = (phone) => {
     return digits;
 };
 
+/**
+ * REUSABLE MAILJET SENDER
+ * This handles the API call to Mailjet
+ */
+const sendMailjetEmail = async (recipients, subject, htmlContent) => {
+    // Mailjet expects an array of recipient objects: { Email: "..." }
+    const toArray = Array.isArray(recipients) 
+        ? recipients.map(email => ({ Email: email }))
+        : [{ Email: recipients }];
+
+    try {
+        const result = await mailjet
+            .post("send", { version: 'v3.1' })
+            .request({
+                "Messages": [
+                    {
+                        "From": {
+                            "Email": process.env.EMAIL_USER, 
+                            "Name": "SoloSafe Emergency"
+                        },
+                        "To": toArray,
+                        "Subject": subject,
+                        "HTMLPart": htmlContent
+                    }
+                ]
+            });
+        console.log('Email sent successfully via Mailjet');
+        return result;
+    } catch (error) {
+        console.error('Mailjet delivery failed:', error.statusCode, error.message);
+        throw error;
+    }
+};
 exports.sendEmergencyEmail = async (contact, trip, type) => {
     const contactsArray = Array.isArray(contact) ? contact : [contact];
     const recipientEmails = contactsArray.map(c => c.email).join(', ');
-    const mailOptions = {
-        from: `"SoloSafe Emergency" <${process.env.EMAIL_USER}>`,
-        to: recipientEmails,
-        subject: `URGENT: ${type}: ${trip.userId.name} needs assistance`,
-        html: `
-            <h2>SoloSafe Emergency Alert</h2>
-            <p>This is an automated alert for <strong>${trip.userId.name}</strong>.</p>
-            <p><strong>Status:</strong> ${type}</p>
-            <p><strong>Destination:</strong> ${trip.destination}</p>
-            <p><strong>Accommodation:</strong> ${trip.accommodation}</p>
-            <hr>
-            <p>View their full itinerary and last known location here:</p>
-            <a href="https://solosafe.app/itinerary/${trip._id}">View Shared Itinerary</a>
-            `
-        };
-    try {
-        const info = await transporter.sendMail(mailOptions);
-        console.log('Emergency email sent: ' + info.messageId);
-    } catch (error) {
-        console.error('Email delivery failed:', error);
-    }
+    const html = `
+        <h2>SoloSafe Emergency Alert</h2>
+        <p>This is an automated alert for <strong>${trip.userId.name}</strong>.</p>
+        <p><strong>Status:</strong> ${type}</p>
+        <p><strong>Destination:</strong> ${trip.destination}</p>
+        <p><strong>Accommodation:</strong> ${trip.accommodation}</p>
+        <hr>
+        <p>View their full itinerary here:</p>
+        <a href="https://solosafe.app/itinerary/${trip._id}">View Shared Itinerary</a>
+    `;
+
+    await sendMailjetEmail(recipientEmails, `URGENT: ${type}: ${trip.userId.name} needs assistance`, html);
 };
+   
 
 exports.sendEmergencyMessage = async (phone, trip, type) => {
     const formattedPhone = formatPhoneNumber(phone);
@@ -95,51 +111,30 @@ exports.sendPushNotification = async (fcmToken, title, body) => {
 };
 
 exports.sendResetEmail = async (user, type, reset) => {
-    const mailOptions = {
-        from: `"SoloSafe " <${process.env.EMAIL_USER}>`,
-        to: user.email,
-        subject: ` ${type}: for ${user.name} `,
-        html: `
-            <h2>SoloSafe Password Reset</h2>
-            <p>This is an automated alert for <strong>${user.name}</strong>.</p>
-            <p><strong>Status:</strong> ${type}</p>
-            <a href="${reset}">click here to reset</a>
-            `
-        };
-    try {
-        const info = await transporter.sendMail(mailOptions);
-        console.log('Emergency email sent: ' + info.messageId);
-    } catch (error) {
-        console.error('Email delivery failed:', error);
-    }
+    const html = `
+        <h2>SoloSafe Password Reset</h2>
+        <p>This is an automated alert for <strong>${user.name}</strong>.</p>
+        <p><strong>Status:</strong> ${type}</p>
+        <a href="${reset}" style="padding: 10px; background: blue; color: white; text-decoration: none;">Click here to reset your password</a>
+    `;
+
+    await sendMailjetEmail(user.email, `${type}: for ${user.name}`, html);
 };
-exports.sendEmergencyEmailWithLoacation = async (contact, trip, type, mapLink, address) => {
+
+exports.sendEmergencyEmailWithLocation = async (contact, trip, type, mapLink, address) => {
     const contactsArray = Array.isArray(contact) ? contact : [contact];
     const recipientEmails = contactsArray.map(c => c.email).join(', ');
-    const mailOptions = {
-        from: `"SoloSafe Emergency" <${process.env.EMAIL_USER}>`,
-        to: recipientEmails,
-        subject: `URGENT: ${type}: ${trip.userId.name} needs assistance`,
-        html: `
-            <h2>SoloSafe Emergency Alert</h2>
-            <p>This is an automated alert for <strong>${trip.userId.name}</strong>.</p>
-            <p><strong>Status:</strong> ${type}</p>
-            <p><strong>Destination:</strong> ${trip.destination}</p>
-            <p><strong>Accommodation:</strong> ${trip.accommodation}</p>
-            <hr>
-            <p>View their full itinerary and last known location here:</p>
-            <p><strong>Precise Location:</strong> ${address}</p>
-            <a href="https://solosafe.app/itinerary/${trip._id}">View Shared Itinerary</a>
-            <p>click here to view their location: ${mapLink}</p>
-            `
-        };
-    try {
+    const html = `
+        <h2>SoloSafe Emergency Alert</h2>
+        <p>This is an automated alert for <strong>${trip.userId.name}</strong>.</p>
+        <p><strong>Status:</strong> ${type}</p>
+        <p><strong>Precise Location:</strong> ${address}</p>
+        <hr>
+        <a href="${mapLink}">View Current Location on Maps</a><br><br>
+        <a href="https://solosafe.app/itinerary/${trip._id}">View Shared Itinerary</a>
+    `;
 
-        const info = await transporter.sendMail(mailOptions);
-        console.log('Emergency email sent: ' + info.messageId);
-    } catch (error) {
-        console.error('Email delivery failed:', error);
-    }
+    await sendMailjetEmail(recipientEmails, `URGENT: ${type}: ${trip.userId.name} needs assistance`, html);
 };
 
 exports.sendEmergencyMessageWithLocation = async (phone, trip, type, mapLink, address) => {
