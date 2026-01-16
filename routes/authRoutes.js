@@ -17,19 +17,20 @@ router.get('/google/callback',
   (req, res) => {
     req.session.regenerate(err => {
     if (err) {
+      console.error('Session regeneration error:', err);  
       return res.redirect('/login');
     }
     req.session.userId = req.user._id;
-    res.redirect(`${process.env.CLIENT_URL}/dashboard.html`);
-    res.status(200).json({ message: 'Login successful',
-      user: {
-          id: req.user._id,
-          name: req.user.name,
-          email: req.user.email
-        }
+
+    req.session.save((saveErr) => {
+      if (saveErr) {
+        console.error('Session save error:', saveErr);
+        return res.redirect('/login');
+      }
+      res.redirect(`${process.env.CLIENT_URL}/dashboard.html`);
+    });
     }); 
   }
 );
-  });
 
 module.exports = router;
