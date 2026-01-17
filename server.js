@@ -32,7 +32,6 @@ connectDB();
 //     console.log("Socket.IO connection detected");
 // });
 // locationSync(io);
-app.set('trust proxy', 1);
 
 // Middleware
 app.use(cors({
@@ -43,17 +42,17 @@ app.use(cors({
     exposedHeaders: ["set-cookie"]
 }));
 app.use(helmet({
-    contentSecurityPolicy: false,
-    permissionsPolicy: {
-        features: {
-            geolocation: ["'self'", `"${process.env.CLIENT_URL}"`]
-        },
-    },
+    // contentSecurityPolicy: false,
+    // permissionsPolicy: {
+    //     features: {
+    //         geolocation: ["'self'", `"${process.env.CLIENT_URL}"`]
+    //     },
+    // },
 }));
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(methodOverride('_method'));
-app.set('trust proxy', 1);
+//app.set('trust proxy', 1);
 
 // Session middleware
 app.use(session({
@@ -74,8 +73,8 @@ app.use(session({
     rolling: true,
     store: MongoStore.create({ 
         mongoUrl: process.env.MONGO_URI,
-        collectionName: 'sessions',
-        stringify: false,
+        // collectionName: 'sessions',
+        // stringify: false,
      })
 }));
 
