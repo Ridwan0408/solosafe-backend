@@ -8,6 +8,10 @@ exports.triggerSOS = async (req, res) => {
 
         const trip = await Trip.findById(tripId).populate('userId');
 
+        if (trip.status === 'SOS') {
+            return res.status(400).json({ message: "SOS already active for this trip." });
+        }
+
         if (!trip) return res.status(404).json({ message: "Trip not found" });
 
         // 1. Correct coordinates handling
