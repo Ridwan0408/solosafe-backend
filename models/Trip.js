@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const crypto = require('crypto');
+//const crypto = require('crypto');
 
 const TripSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -7,9 +7,9 @@ const TripSchema = new mongoose.Schema({
   startDate: { type: Date, required: true },
   endDate: { type: Date, required: true },
   accommodation: { type: String},
-  checkInFrequency: { type: Number, default: 24 }, 
-  nextCheckIn: { type: Date, required: true },
-  isSafe: { type: Boolean, default: true },
+  checkInFrequency: { type: Number, default: 1440 }, 
+  nextCheckIn: { type: Date },
+  //isSafe: { type: Boolean, default: true },
   status: { type: String, enum: ['Safe', 'Missed Check-in', 'SOS', 'Completed', 'active'], default: 'Safe' },
   lastCheckIn: { type: Date, default: Date.now },
   //shareToken: { type: String, unique: true }, // For view-only access

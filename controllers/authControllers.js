@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto'); // Built-in Node module
+const jwt = require('jsonwebtoken');
 
 exports.register = async (req, res) => {
   const { name, email, password, } = req.body;
@@ -21,8 +22,17 @@ exports.register = async (req, res) => {
     });
 
     await user.save();
+
+    // generate JWT token
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+
     res.status(201).json({ 
       message: 'User registered successfully',
+      token: token,
       user: {
         id: user._id,
         name: user.name,
@@ -50,9 +60,18 @@ exports.login = async (req, res) => {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
         // Set session
-        req.session.userId = user._id;
-        res.status(200).json({ message: 'Login successful',
-        user: {
+        //req.session.userId = user._id;
+
+        //create token
+        const token = jwt.sign(
+          { userId: user._id },
+          process.env.JWT_SECRET,
+          { expiresIn: '1d' }
+        )
+        res.status(200).json({ 
+          message: 'Login successful',
+          token: token,
+          user: {
             id: user._id,
             name: user.name,
             email: user.email
@@ -65,14 +84,14 @@ exports.login = async (req, res) => {
 };
 
 exports.logout = (req, res) => {    
-    req.session.destroy(err => {
-        if (err) {
-            return res.status(500).json({ message: 'Logout failed'});
-        }
-        res.clearCookie('connect.sid'); // Clear session cookie
+    // req.session.destroy(err => {
+    //     if (err) {
+    //         return res.status(500).json({ message: 'Logout failed'});
+    //     }
+    //     res.clearCookie('connect.sid'); // Clear session cookie
         res.status(200).json({ message: 'Logout successful' });
-    });
-}
+    // });
+};
 
 // Forgot Password - Generate Reset Token
 exports.forgotPassword = async (req, res) => {

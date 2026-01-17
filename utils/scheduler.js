@@ -15,7 +15,7 @@ const { sendEmergencyEmail, sendEmergencyMessage, sendPushNotification, sendEmer
 
             // 1. Find users who are 1 minute late (Send a Warning)
             const lateTrips = await Trip.find({
-            status: 'safe',
+            status: 'Safe',
             nextCheckIn: { $lt: now, $gt: graceStartTime } 
             }).populate('userId');
 

@@ -1,25 +1,11 @@
 const Trip = require('../models/Trip');
 
-// Handle manual check-in
-exports.checkIn = async (req, res) => {
-  try {
-    const trip = await Trip.findOneAndUpdate(
-      { userId: req.user.id, status: { $ne: 'SOS' } },
-      { lastCheckIn: Date.now(), status: 'Safe' },
-      { new: true }
-    );
-    res.json({ message: "Check-in successful", trip });
-  } catch (err) {
-    res.status(500).send('Server Error');
-  }
-};
-
 exports.createTrip = async (req, res) => {
     try {
         const { destination, startDate, endDate, accommodation, checkInFrequency, emergencyContacts } = req.body;
-
+        const userId = req.userId;
         // 1. Check if user already has an active trip (MVP Constraint) 
-        const existingTrip = await Trip.findOne({ userId: req.user.id, status: 'active' });
+        const existingTrip = await Trip.findOne({ userId: userId, status: 'Safe' });
         if (existingTrip) {
             return res.status(400).json({ message: "You already have an active trip." });
         }
@@ -30,7 +16,7 @@ exports.createTrip = async (req, res) => {
 
         // 3. Create the trip [cite: 26, 38]
         const newTrip = await Trip.create({
-            userId: req.user.id,
+            userId,
             destination,
             startDate,
             endDate,
@@ -101,9 +87,10 @@ exports.deleteContactFromTrip = async (req, res) => {
 exports.confirmSafety = async (req, res) => {
     try {
         const { tripId } = req.params;
+        const userId = req.userId;
 
         // 1. Find the trip and ensure it belongs to the logged-in user
-        const trip = await Trip.findOne({ _id: tripId, userId: req.user.id });
+        const trip = await Trip.findOne({ _id: tripId, userId: userId });
 
         if (!trip) {
             return res.status(404).json({ message: "Trip not found or unauthorized." });
@@ -146,7 +133,7 @@ exports.getPublicItinerary = async (req, res) => {
 
 exports.getUserTrips = async (req, res) => {
     try {
-        const trips = await Trip.find({ userId: req.user.id });
+        const trips = await Trip.find({ userId: req.userId });
         res.status(200).json(trips);
     } catch (err) {
         res.status(500).json({ error: "Failed to retrieve trips." });
@@ -156,7 +143,7 @@ exports.getUserTrips = async (req, res) => {
 exports.endTrip = async (req, res) => {
     try {
         const { tripId } = req.params;  
-        const trip = await Trip.findOne({ _id: tripId, userId: req.user.id });
+        const trip = await Trip.findOne({ _id: tripId, userId: req.userId });
 
         if (!trip) {
             return res.status(404).json({ message: "Trip not found." });
