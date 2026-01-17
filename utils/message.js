@@ -70,6 +70,7 @@ exports.sendEmergencyEmail = async (contact, trip, type) => {
         <hr>
         <p>View their full itinerary here:</p>
         <a href="${process.env.CLIENT_URL}/public/${trip._id}">View Shared Itinerary</a>
+        <a href="${process.env.CLIENT_URL}/public.html?=${trip._id}">View Itinerary</a>
     `;
 
     await sendMailjetEmail(recipientEmails, `URGENT: ${type}: ${trip.userId.name} needs assistance`, html);
@@ -82,7 +83,9 @@ exports.sendEmergencyMessage = async (phone, trip, type) => {
         URGENT: ${trip.userId.name} has triggered a ${type} alert on SoloSafe.
         Destination: ${trip.destination}
         Accommodation: ${trip.accommodation}
-        View their itinerary: ${process.env.CLIENT_URL}/public/${trip._id}`;
+        View their itinerary: ${process.env.CLIENT_URL}/public/${trip._id}
+        View their itinerary: ${process.env.CLIENT_URL}/public.html?=${trip._id}`;
+        
     try{        
         await twilioClient.messages.create({
             body: messageBody,
@@ -125,16 +128,39 @@ exports.sendEmergencyEmailWithLocation = async (contact, trip, type, mapLink, ad
     const contactsArray = Array.isArray(contact) ? contact : [contact];
     const recipientEmails = contactsArray.map(c => c.email).join(', ');
     const html = `
-        <h2>SoloSafe Emergency Alert</h2>
+    <div style="border: 2px solid red; padding: 20px; font-family: sans-serif;">
+        <h2 style="color: red;">SoloSafe Emergency Alert</h2>
         <p>This is an automated alert for <strong>${trip.userId.name}</strong>.</p>
         <p><strong>Status:</strong> ${type}</p>
         <p><strong>Precise Location:</strong> ${address}</p>
         <hr>
-        <a href="${mapLink}">View Current Location on Maps</a><br><br>
-        <a href="${process.env.CLIENT_URL}/public/${trip._id}">View Shared Itinerary</a>
+        <a href="${mapLink}" style="background: red; color: white; padding: 10px; text-decoration: none;">View Location on Maps</a><br><br>
+        <a href="${process.env.CLIENT_URL}/public/${trip._id}">View Itinerary</a>
+        <a href="${process.env.CLIENT_URL}/public.html?=${trip._id}">View Itinerary</a>
+    </div>
     `;
 
     await sendMailjetEmail(recipientEmails, `URGENT: ${type}: ${trip.userId.name} needs assistance`, html);
+};
+
+exports.sendSafetyEmailWithLocation = async (contact, trip, type, mapLink, address) => {
+    const contactsArray = Array.isArray(contact) ? contact : [contact];
+    const recipientEmails = contactsArray.map(c => c.email).join(', ');
+    const html = `
+    <div style="border: 2px solid green; padding: 20px; font-family: sans-serif;">
+        <h2 style="color: green;">SoloSafe: User is SAFE</h2>
+        <p>Good news! <strong>${trip.userId.name}</strong> has confirmed safety and cancelled SOS.</p>
+        <p><strong>Status:</strong> ${type}</p>
+        <p><strong>Precise Location:</strong> ${address}</p>
+        <hr>
+        <a href="${mapLink}" style="background: green; color: white; padding: 10px; text-decoration: none;">View Location on Maps</a><br><br>
+        <p>You can still view the trip details here:</p>
+        <a href="${process.env.CLIENT_URL}/public/${trip._id}">View Itinerary</a>
+        <a href="${process.env.CLIENT_URL}/public.html?=${trip._id}">View Itinerary</a>
+    </div>
+    `;
+
+    await sendMailjetEmail(recipientEmails, `SAFE: ${type}: ${trip.userId.name} has confirmed safety and cancelled SOS`, html);
 };
 
 exports.sendEmergencyMessageWithLocation = async (phone, trip, type, mapLink, address) => {
@@ -145,6 +171,7 @@ exports.sendEmergencyMessageWithLocation = async (phone, trip, type, mapLink, ad
         Accommodation: ${trip.accommodation}\n<p>
         Address: ${address}\n
         View their itinerary: ${process.env.CLIENT_URL}/public/${trip._id}\n
+        View their itinerary: ${process.env.CLIENT_URL}/public.html?=${trip._id}\n
         click here to view their location: ${mapLink}\n`
     try{
         await twilioClient.messages.create({

@@ -1,6 +1,6 @@
 const Trip = require('../models/Trip');
 const geoCoder = require('../utils/geoCoder');
-const { sendEmergencyEmailWithLocation, sendEmergencyMessageWithLocation, sendPushNotification} = require('../utils/message');
+const { sendEmergencyEmailWithLocation, sendEmergencyMessageWithLocation, sendSafetyEmailWithLocation, sendPushNotification} = require('../utils/message');
 
 exports.triggerSOS = async (req, res) => {
     try {
@@ -55,14 +55,41 @@ exports.triggerSOS = async (req, res) => {
 };
 exports.cancelSOS = async (req, res) => {
     try {
-        const { tripId } = req.body;    
-        const trip = await Trip.findById(tripId);
+        const { tripId, latitude, longitude } = req.body;    
+        const trip = await Trip.findById(tripId).populate('userId');
 
         if (!trip) return res.status(404).json({ message: "Trip not found" });
         // Revert status back to Safe
         trip.status = 'Safe';
+
+        if (latitude && longitude) {
+            trip.lastKnownLocation.lat = latitude; 
+            trip.lastKnownLocation.lng = longitude; 
+        }
         await trip.save();
-        res.status(200).json({ message: "SOS cancelled, status reverted to Safe." });
+
+        let preciseAddress = 'Location not available';
+        if (latitude && longitude) {
+            try {
+                const loc = await geoCoder.getAddress(latitude, longitude);
+                preciseAddress = loc;
+            } catch (error) {
+                console.error("Error reverse geocoding:", error);
+            }
+        }
+        const mapLink = latitude ? `https://www.google.com/maps?q=${latitude},${longitude}` : 'Not available';
+
+        // Send safety email and SMS
+        trip.emergencyContacts.forEach(contact => {
+            sendSafetyEmailWithLocation(contact, trip, "SOS CANCELLED", mapLink, preciseAddress);
+            console.log(`Safety confirmation sent to ${contact.email} for ${trip.userId.name}`);
+        });
+
+        res.status(200).json({
+            message: "SOS cancelled, status reverted to Safe.",
+            address: preciseAddress,
+            status: trip.status
+        });
     } catch (error) {
         res.status(500).json({ error: "Failed to cancel SOS" });
     }   
