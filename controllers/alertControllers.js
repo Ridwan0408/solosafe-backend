@@ -10,11 +10,20 @@ exports.triggerSOS = async (req, res) => {
 
         if (!trip) return res.status(404).json({ message: "Trip not found" });
 
+        // 1. Correct coordinates handling
+        const lat = parseFloat(latitude);
+        const lng = parseFloat(longitude);
+
+        // 2. Fix the mapLink syntax (Using the standard Google Maps Search URL)
+        const mapLink = (!isNaN(lat) && !isNaN(lng))
+            ? `https://www.google.com/maps?q=${lat},${lng}` 
+            : null;
+
         // Reverse geocode to get precise address
         let preciseAddress = 'Location not available';
-        if (latitude && longitude) {
+        if (mapLink) {
             try {
-                const loc = await geoCoder.getAddress(latitude, longitude);
+                const loc = await geoCoder.getAddress(lat, lng);
                 preciseAddress = loc;
             } catch (error) {
                 console.error("Error reverse geocoding:", error);
@@ -28,7 +37,7 @@ exports.triggerSOS = async (req, res) => {
         await trip.save();
 
         // Construct location link for the alerts 
-        const mapLink = latitude ? `https://www.google.com/maps?q=${latitude},${longitude}` : 'Not available';
+        //const mapLink = latitude ? `https://www.google.com/maps?q=${latitude},${longitude}` : 'Not available';
 
         // Immediate email to all emergency contacts [cite: 64]
 
@@ -59,6 +68,16 @@ exports.cancelSOS = async (req, res) => {
         const trip = await Trip.findById(tripId).populate('userId');
 
         if (!trip) return res.status(404).json({ message: "Trip not found" });
+
+        // 1. Correct coordinates handling
+        const lat = parseFloat(latitude);
+        const lng = parseFloat(longitude);
+
+        // 2. Fix the mapLink syntax (Using the standard Google Maps Search URL)
+        const mapLink = (!isNaN(lat) && !isNaN(lng)) 
+            ? `https://www.google.com/maps?q=${lat},${lng}` 
+            : null;
+
         // Revert status back to Safe
         trip.status = 'Safe';
 
@@ -69,15 +88,15 @@ exports.cancelSOS = async (req, res) => {
         await trip.save();
 
         let preciseAddress = 'Location not available';
-        if (latitude && longitude) {
+        if (mapLink) {
             try {
-                const loc = await geoCoder.getAddress(latitude, longitude);
+                const loc = await geoCoder.getAddress(lat, lng);
                 preciseAddress = loc;
             } catch (error) {
                 console.error("Error reverse geocoding:", error);
             }
         }
-        const mapLink = latitude ? `https://www.google.com/maps?q=${latitude},${longitude}` : 'Not available';
+        //const mapLink = latitude ? `https://www.google.com/maps?q=${latitude},${longitude}` : 'Not available';
 
         // Send safety email and SMS
         trip.emergencyContacts.forEach(contact => {

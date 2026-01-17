@@ -127,14 +127,22 @@ exports.sendResetEmail = async (user, type, reset) => {
 exports.sendEmergencyEmailWithLocation = async (contact, trip, type, mapLink, address) => {
     const contactsArray = Array.isArray(contact) ? contact : [contact];
     const recipientEmails = contactsArray.map(c => c.email).join(', ');
+    // Conditional rendering for the map button
+    const mapButton = (mapLink && mapLink !== 'Not available') 
+        ? `<div style="margin: 20px 0;">
+             <a href="${mapLink}" style="background-color: #d9534f; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                VIEW CURRENT LOCATION ON MAP
+             </a>
+           </div>`
+        : `<p style="color: #777; font-style: italic;">(Map location unavailable at the time of alert)</p>`;
     const html = `
     <div style="border: 2px solid red; padding: 20px; font-family: sans-serif;">
         <h2 style="color: red;">SoloSafe Emergency Alert</h2>
         <p>This is an automated alert for <strong>${trip.userId.name}</strong>.</p>
         <p><strong>Status:</strong> ${type}</p>
         <p><strong>Precise Location:</strong> ${address}</p>
-        <hr>
-        <a href="${mapLink}" style="background: red; color: white; padding: 10px; text-decoration: none;">View Location on Maps</a><br><br>
+        <hr style="border: 0; border-top: 1px solid #eee;">
+        ${mapButton}
         <a href="${process.env.CLIENT_URL}/public/${trip._id}">View Itinerary</a>
         <a href="${process.env.CLIENT_URL}/shared-trip.html?id=${trip._id}">View Itinerary</a>
     </div>
@@ -146,14 +154,22 @@ exports.sendEmergencyEmailWithLocation = async (contact, trip, type, mapLink, ad
 exports.sendSafetyEmailWithLocation = async (contact, trip, type, mapLink, address) => {
     const contactsArray = Array.isArray(contact) ? contact : [contact];
     const recipientEmails = contactsArray.map(c => c.email).join(', ');
+    // Conditional rendering for the map button
+    const mapButton = (mapLink && mapLink !== 'Not available') 
+        ? `<div style="margin: 20px 0;">
+             <a href="${mapLink}" style="background-color: #d9534f; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                VIEW CURRENT LOCATION ON MAP
+             </a>
+           </div>`
+        : `<p style="color: #777; font-style: italic;">(Map location unavailable at the time of alert)</p>`;
     const html = `
     <div style="border: 2px solid green; padding: 20px; font-family: sans-serif;">
         <h2 style="color: green;">SoloSafe: User is SAFE</h2>
         <p>Good news! <strong>${trip.userId.name}</strong> has confirmed safety and cancelled SOS.</p>
         <p><strong>Status:</strong> ${type}</p>
         <p><strong>Precise Location:</strong> ${address}</p>
-        <hr>
-        <a href="${mapLink}" style="background: green; color: white; padding: 10px; text-decoration: none;">View Location on Maps</a><br><br>
+        <hr style="border: 0; border-top: 1px solid #eee;">
+        ${mapButton}
         <p>You can still view the trip details here:</p>
         <a href="${process.env.CLIENT_URL}/public/${trip._id}">View Itinerary</a>
         <a href="${process.env.CLIENT_URL}/shared-trip.html?id=${trip._id}">View Itinerary</a>
