@@ -42,12 +42,12 @@ app.use(cors({
     exposedHeaders: ["set-cookie"]
 }));
 app.use(helmet({
-    // contentSecurityPolicy: false,
-    // permissionsPolicy: {
-    //     features: {
-    //         geolocation: ["'self'", `"${process.env.CLIENT_URL}"`]
-    //     },
-    // },
+    contentSecurityPolicy: false,
+    permissionsPolicy: {
+        features: {
+            geolocation: ["'self'", `"${process.env.CLIENT_URL}"`]
+        },
+    },
 }));
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
