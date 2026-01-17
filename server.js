@@ -5,7 +5,7 @@ const connectDB = require('./config/db');
 const http = require('http');
 const session = require('express-session');
 const { Server } = require('socket.io');
-const MongoStore = require('connect-mongo').default;
+const MongoStore = require('connect-mongo')//.default;
 const methodOverride = require('method-override');
 const helmet = require('helmet');
 const passport = require('passport');
@@ -44,7 +44,7 @@ app.use(cors({
 }));
 app.use(helmet({
     contentSecurityPolicy: false,
-    permissionPolicy: {
+    permissionsPolicy: {
         features: {
             geolocation: ["'self'", `"${process.env.CLIENT_URL}"`]
         },
@@ -73,7 +73,10 @@ app.use(session({
     proxy: true,
     rolling: true,
     store: MongoStore.create({ 
-        mongoUrl: process.env.MONGO_URI })
+        mongoUrl: process.env.MONGO_URI,
+        collectionName: 'sessions',
+        stringify: false,
+     })
 }));
 
 // Make session available in EJS templates
