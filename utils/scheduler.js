@@ -1,33 +1,89 @@
 const Trip = require('../models/Trip');
 const cron = require('node-cron');
-const { sendEmergencyEmail, sendEmergencyMessage, sendPushNotification } = require('./message');
+const geoCoder = require('./geoCoder');
+const { sendEmergencyEmail, sendEmergencyMessage, sendPushNotification, sendEmergencyEmailWithLocation, sendEmergencyMessageWithLocation, } = require('./message');
 
 
 // This runs every MINUTE [cite: 102]
     cron.schedule('* * * * *', async () => {
         try {
             const now = new Date();
-            
-            // Find travelers who missed their check-in time and haven't clicked "I'm Safe" [cite: 53, 54]
+            const GRACE_PERIOD_MINUTES = 30;
+
+            const graceStartTime = new Date(now.getTime() - GRACE_PERIOD_MINUTES * 60000);
+            //graceStartTime.setMinutes(graceStartTime.getMinutes() - GRACE_PERIOD_MINUTES);
+
+            // 1. Find users who are 1 minute late (Send a Warning)
+            const lateTrips = await Trip.find({
+            status: 'safe',
+            nextCheckIn: { $lt: now, $gt: graceStartTime } 
+            }).populate('userId');
+
+            for (const trip of lateTrips) {
+                trip.status = 'Missed Check-in';
+                await trip.save();
+
+                if (trip.userId.fcmToken) {
+                    sendPushNotification(trip.userId.fcmToken, 
+                        "⚠️ Check-in Overdue!", 
+                        "Are you safe? Please check in!",
+                        "You missed your check-in. You have 30 minutes before your emergency contacts are alerted.");
+                }
+                console.log(`Warning push notification sent to user ID: ${trip.userId} for trip ID: ${trip._id}` ); 
+            }
+
+
+            // Find travelers who missed their check-in time and haven't clicked "I'm Safe" 
             const overdueTrips = await Trip.find({
-                nextCheckIn: { $lt: now },
-                status: 'Safe'
+                nextCheckIn: { $lte: graceStartTime}, // 30 minutes grace period
+                status: 'Missed Check-in'
             }).populate('userId');
 
             for (const trip of overdueTrips) {
-                trip.status = 'Missed Check-in'; //[cite: 48]
+                trip.status = 'SOS'; 
                 await trip.save();
+
+                    // Get location details
+                const lat = trip.lastKnownLocation.lat;
+                const lng = trip.lastKnownLocation.lng;
+                const mapLink = (!isNaN(lat) && !isNaN(lng))
+                    ? `https://www.google.com/maps?q=${lat},${lng}` 
+                    : null;
+                
+                let address = 'Address not available';
+                if (lat && lng) {
+                    try {
+                        address = await geoCoder.getAddress(lat, lng);
+                    } catch (err) {
+                        console.error("Cron Geocode Error:", err.message);
+                    }
+                }
 
                 // Send Email to each emergency contact [cite: 55, 56]
                 trip.emergencyContacts.forEach(contact => {
                     // Logic to trigger email via Nodemailer goes here
-                    sendEmergencyEmail(contact.email, trip, "MISSING CHECK-IN");
+                    if (contact.email) {
+                        sendEmergencyEmailWithLocation(
+                            contact, 
+                            trip, 
+                            "URGENT: MISSED CHECK-IN ALERT & GRACE PERIOD EXPIRED", 
+                            mapLink, 
+                            address);
+                        console.log(`Missed check-in email sent to ${contact.email} for ${trip.userId.name}`);
+                    }
                     console.log(`Alert sent to ${contact.email} for ${trip.userId.name}`);
                 });
-                // Send SMS to each emergency contact via Twilio [cite: 57, 58]
+                // Send SMS to each emergency contact via Twilio
                 trip.emergencyContacts.forEach(contact => {
                     // Logic to trigger SMS via Twilio goes here
-                    sendEmergencyMessage(contact.phone, trip, "MISSING CHECK-IN");
+                    if (contact.phone){
+                        sendEmergencyMessageWithLocation(
+                            contact.phone, 
+                            trip, 
+                            "URGENT: MISSED CHECK-IN ALERT & GRACE PERIOD EXPIRED", 
+                            mapLink, 
+                            address);
+                    }
                     console.log(`SMS alert sent to ${contact.phone} for ${trip.userId.name}`);
                 });
                 // Push Notification if FCM token exists [cite: 59]
@@ -38,7 +94,7 @@ const { sendEmergencyEmail, sendEmergencyMessage, sendPushNotification } = requi
                         `${trip.userId.name} has missed their check-in. Please check your email/SMS for details.`
                     );
                 }
-                console.log(`Missed check-in alerts processed for trip ID: ${trip._id}`);
+                console.log(` EMERGENCY and Missed check-in alerts processed for trip ID: ${trip._id}`);
             }
             console.log(`Missed check-in mail alert cron job executed at ${now.toISOString()}`);
         } catch (error) {
