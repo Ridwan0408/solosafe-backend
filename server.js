@@ -14,6 +14,7 @@ const passport = require('passport');
 require('./config/passport');
 require('./utils/scheduler');
 const locationSync = require('./utils/locationSync');
+const { permission } = require('process');
 
 // Initialize app
 const app = express();
@@ -31,7 +32,7 @@ connectDB();
 //     console.log("Socket.IO connection detected");
 // });
 // locationSync(io);
-
+app.set('trust proxy', 1);
 
 // Middleware
 app.use(cors({
@@ -41,10 +42,18 @@ app.use(cors({
     allowedHeaders: ["Content-Type"],
     exposedHeaders: ["set-cookie"]
 }));
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: false,
+    permissionPolicy: {
+        features: {
+            geolocation: ["'self'", `"${process.env.CLIENT_URL}"`]
+        },
+    },
+}));
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(methodOverride('_method'));
+app.set('trust proxy', 1);
 
 // Session middleware
 app.use(session({
