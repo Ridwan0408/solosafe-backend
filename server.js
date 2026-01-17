@@ -73,8 +73,8 @@ app.use(session({
     rolling: true,
     store: MongoStore.create({ 
         mongoUrl: process.env.MONGO_URI,
-        // collectionName: 'sessions',
-        // stringify: false,
+        collectionName: 'sessions',
+        stringify: false,
      })
 }));
 
