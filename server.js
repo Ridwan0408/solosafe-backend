@@ -5,7 +5,7 @@ const connectDB = require('./config/db');
 const http = require('http');
 const session = require('express-session');
 const { Server } = require('socket.io');
-const MongoStore = require('connect-mongo')//.default;
+const MongoStore = require('connect-mongo').default;
 const methodOverride = require('method-override');
 const helmet = require('helmet');
 const passport = require('passport');
@@ -75,7 +75,7 @@ app.use(session({
     store: MongoStore.create({ 
         mongoUrl: process.env.MONGO_URI,
         collectionName: 'sessions',
-        //stringify: false,
+        stringify: false,
      })
 }));
 
