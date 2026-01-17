@@ -70,7 +70,7 @@ exports.sendEmergencyEmail = async (contact, trip, type) => {
         <hr>
         <p>View their full itinerary here:</p>
         <a href="${process.env.CLIENT_URL}/public/${trip._id}">View Shared Itinerary</a>
-        <a href="${process.env.CLIENT_URL}/shared-trip.html?=${trip._id}">View Itinerary</a>
+        <a href="${process.env.CLIENT_URL}/public.html?=${trip._id}">View Itinerary</a>
     `;
 
     await sendMailjetEmail(recipientEmails, `URGENT: ${type}: ${trip.userId.name} needs assistance`, html);
@@ -84,7 +84,7 @@ exports.sendEmergencyMessage = async (phone, trip, type) => {
         Destination: ${trip.destination}
         Accommodation: ${trip.accommodation}
         View their itinerary: ${process.env.CLIENT_URL}/public/${trip._id}
-        View their itinerary: ${process.env.CLIENT_URL}/shared-trip.html?=${trip._id}`;
+        View their itinerary: ${process.env.CLIENT_URL}/public.html?=${trip._id}`;
         
     try{        
         await twilioClient.messages.create({
@@ -136,7 +136,7 @@ exports.sendEmergencyEmailWithLocation = async (contact, trip, type, mapLink, ad
         <hr>
         <a href="${mapLink}" style="background: red; color: white; padding: 10px; text-decoration: none;">View Location on Maps</a><br><br>
         <a href="${process.env.CLIENT_URL}/public/${trip._id}">View Itinerary</a>
-        <a href="${process.env.CLIENT_URL}/shared-trip.html?=${trip._id}">View Itinerary</a>
+        <a href="${process.env.CLIENT_URL}/public.html?=${trip._id}">View Itinerary</a>
     </div>
     `;
 
@@ -156,7 +156,7 @@ exports.sendSafetyEmailWithLocation = async (contact, trip, type, mapLink, addre
         <a href="${mapLink}" style="background: green; color: white; padding: 10px; text-decoration: none;">View Location on Maps</a><br><br>
         <p>You can still view the trip details here:</p>
         <a href="${process.env.CLIENT_URL}/public/${trip._id}">View Itinerary</a>
-        <a href="${process.env.CLIENT_URL}/shared-trip.html?=${trip._id}">View Itinerary</a>
+        <a href="${process.env.CLIENT_URL}/public.html?=${trip._id}">View Itinerary</a>
     </div>
     `;
 
@@ -171,7 +171,7 @@ exports.sendEmergencyMessageWithLocation = async (phone, trip, type, mapLink, ad
         Accommodation: ${trip.accommodation}\n<p>
         Address: ${address}\n
         View their itinerary: ${process.env.CLIENT_URL}/public/${trip._id}\n
-        View their itinerary: ${process.env.CLIENT_URL}/shared-trip.html?=${trip._id}\n
+        View their itinerary: ${process.env.CLIENT_URL}/public.html?=${trip._id}\n
         click here to view their location: ${mapLink}\n`
     try{
         await twilioClient.messages.create({
