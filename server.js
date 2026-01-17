@@ -52,7 +52,7 @@ app.use(helmet({
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(methodOverride('_method'));
-//app.set('trust proxy', 1);
+app.set('trust proxy', 1);
 
 // Session middleware
 app.use(session({
