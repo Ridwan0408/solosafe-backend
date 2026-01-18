@@ -36,7 +36,7 @@ app.set('trust proxy', 1);
 
 // Middleware
 app.use(cors({
-    origin: process.env.CLIENT_URL, 
+    origin: "*", // replace "*" with your frontend URL in production
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
