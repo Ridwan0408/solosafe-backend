@@ -82,15 +82,6 @@ exports.cancelSOS = async (req, res) => {
             ? `https://www.google.com/maps?q=${lat},${lng}` 
             : null;
 
-        // Revert status back to Safe
-        trip.status = 'Safe';
-
-        if (latitude && longitude) {
-            trip.lastKnownLocation.lat = latitude; 
-            trip.lastKnownLocation.lng = longitude; 
-        }
-        await trip.save();
-
         let preciseAddress = 'Location not available';
         if (mapLink) {
             try {
@@ -100,6 +91,16 @@ exports.cancelSOS = async (req, res) => {
                 console.error("Error reverse geocoding:", error);
             }
         }
+
+        // Revert status back to Safe
+        trip.status = 'Safe';
+        if (latitude && longitude) {
+            trip.lastKnownLocation.lat = latitude; 
+            trip.lastKnownLocation.lng = longitude; 
+        }
+        await trip.save();
+
+        
         //const mapLink = latitude ? `https://www.google.com/maps?q=${latitude},${longitude}` : 'Not available';
 
         // Send safety email and SMS
@@ -119,7 +120,7 @@ exports.cancelSOS = async (req, res) => {
 };
 exports.getLastKnownLocation = async (req, res) => {
     try {
-        const { tripId } = req.params;  
+        const { tripId,} = req.params;  
         const trip = await Trip.findById(tripId);
         if (!trip) return res.status(404).json({ message: "Trip not found" });
         res.status(200).json({ lastKnownLocation: trip.lastKnownLocation });
@@ -130,12 +131,12 @@ exports.getLastKnownLocation = async (req, res) => {
 exports.updateLastKnownLocation = async (req, res) => {
     try {
         const { tripId } = req.params;  
-        const { location } = req.body;
+        const { latitude, longitude } = req.body;
         const trip = await Trip.findById(tripId);
         if (!trip) return res.status(404).json({ message: "Trip not found" });
-        trip.lastKnownLocation = location;
+        trip.lastKnownLocation = { lat: latitude, lng: longitude };
         await trip.save();
-        res.status(200).json({ message: "Last known location updated." });
+        res.status(200).json({ message: "Last known location updated.", lastKnownLocation: trip.lastKnownLocation });
     } catch (error) {
         res.status(500).json({ error: "Failed to update last known location" });
     }

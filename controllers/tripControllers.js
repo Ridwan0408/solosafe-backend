@@ -5,7 +5,7 @@ exports.createTrip = async (req, res) => {
         const { destination, startDate, endDate, accommodation, checkInFrequency, emergencyContacts } = req.body;
         const userId = req.userId;
         // 1. Check if user already has an active trip (MVP Constraint) 
-        const existingTrip = await Trip.findOne({ userId: userId, status: 'Safe' });
+        const existingTrip = await Trip.findOne({ userId: userId, status: 'active' });// ['Safe', 'Missed Check-in', 'SOS', 'Completed', 'active']
         if (existingTrip) {
             return res.status(400).json({ message: "You already have an active trip." });
         }
