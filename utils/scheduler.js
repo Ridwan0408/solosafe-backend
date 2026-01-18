@@ -102,24 +102,29 @@ const { sendEmergencyEmail, sendEmergencyMessage, sendPushNotification, sendEmer
         }   
     });
 
+    // This runs every hour to check for trips that should start
+    cron.schedule('0 * * * *', async () => {
+        try {
+            const now = new Date();
+            
+            // Find trips that are 'Upcoming' but the startDate has arrived
+            const tripsToActivate = await Trip.find({
+                status: 'upcoming',
+                startDate: { $lte: now }
+            });
 
-
-
-// const cron = require('node-cron');
-// const Trip = require('../models/Trip');
-
-// // Runs every hour to check for missed check-ins
-// cron.schedule('0 * * * *', async () => {
-//     const now = new Date();
-//     const activeTrips = await Trip.find({ status: 'Safe' });
-
-//     for (let trip of activeTrips) {
-//         const hoursDiff = (now - trip.lastCheckIn) / (1000 * 60 * 60);
-//         if (hoursDiff > trip.checkInFrequency) {
-//             trip.status = 'Missed Check-in';
-//             await trip.save();
-//             // Trigger email service to alert contacts
-//             console.log(`ALERT: User ${trip.userId} missed their check-in!`);
-//         }
-//     }
-// });
+            for (const trip of tripsToActivate) {
+                trip.status = 'Safe';
+                
+                // Initialize the very first nextCheckIn
+                const firstCheckIn = new Date();
+                firstCheckIn.setMinutes(firstCheckIn.getMinutes() + trip.checkInFrequency);
+                trip.nextCheckIn = firstCheckIn;
+                
+                await trip.save();
+                console.log(`Trip ${trip._id} has been activated automatically.`);
+            }
+        } catch (error) {
+            console.error("Error activating upcoming trips:", error);
+        }
+    });

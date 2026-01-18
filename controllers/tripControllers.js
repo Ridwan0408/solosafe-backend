@@ -4,17 +4,28 @@ exports.createTrip = async (req, res) => {
     try {
         const { destination, startDate, endDate, accommodation, checkInFrequency, emergencyContacts } = req.body;
         const userId = req.userId;
+        const now = new Date();
+        const start = new Date(startDate);
         // 1. Check if user already has an active trip (MVP Constraint) 
-        const existingTrip = await Trip.findOne({ userId: userId, status: 'active' });// ['Safe', 'Missed Check-in', 'SOS', 'Completed', 'active']
+        const existingTrip = await Trip.findOne({
+            userId: userId, 
+            status: {$in: ['active', 'Safe', 'Missed Check-in', 'SOS'] }
+        });// ['Safe', 'Missed Check-in', 'SOS', 'Completed', 'active']
         if (existingTrip) {
             return res.status(400).json({ message: "You already have an active trip." });
         }
-
         // 2. Calculate the first check-in time based on frequency (e.g., 8 or 24 hours) [cite: 51]
-        const firstCheckIn = new Date();
-        firstCheckIn.setMinutes(firstCheckIn.getMinutes() + parseInt(checkInFrequency));
+        const isStartingNow = start <= now;
 
-        // 3. Create the trip [cite: 26, 38]
+        let firstCheckIn = null;
+        if (isStartingNow) {
+            firstCheckIn = new Date();
+            firstCheckIn.setMinutes(firstCheckIn.getMinutes() + parseInt(checkInFrequency));
+        }
+        // const firstCheckIn = new Date();
+        // firstCheckIn.setMinutes(firstCheckIn.getMinutes() + parseInt(checkInFrequency));
+
+        // 3. Create the trip 
         const newTrip = await Trip.create({
             userId,
             destination,
@@ -23,6 +34,7 @@ exports.createTrip = async (req, res) => {
             accommodation,
             checkInFrequency,
             nextCheckIn: firstCheckIn,
+            status: isStartingNow ? 'active' : 'upcoming',
             emergencyContacts // These can be pulled from user profile or set specifically for this trip [cite: 37]
         });
 
