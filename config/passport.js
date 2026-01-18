@@ -9,16 +9,22 @@ passport.use(new GoogleStrategy({
     proxy: true
   },
   async (accessToken, refreshToken, profile, done) => {
+    const email = profile.emails[0].value;
     try {
-      let user = await User.findOne({ googleId: profile.id });
-      if (!user) {
-        // Create new user if they don't exist
-        user = await User.create({
-          googleId: profile.id,
-          name: profile.displayName,
-          email: profile.emails[0].value,
-        });
-      }
+      let user = await User.findOneAndUpdate(
+        { email: email },
+        {
+          $set: {
+            googleId: profile.id,
+            name: profile.displayName
+          }
+        },
+        { 
+          upsert: true,
+          new: true,
+          runValidators: true
+        }
+      );
       return done(null, user);
     } catch (err) {
       return done(err, null);

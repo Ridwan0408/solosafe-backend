@@ -10,7 +10,7 @@ const TripSchema = new mongoose.Schema({
   checkInFrequency: { type: Number, default: 1440 }, 
   nextCheckIn: { type: Date },
   //isSafe: { type: Boolean, default: true },
-  status: { type: String, enum: ['Safe', 'Missed Check-in', 'SOS', 'Completed', 'active'], default: 'active' },
+  status: { type: String, enum: ['Safe', 'Missed Check-in', 'SOS', 'Completed', 'active', 'upcoming'], default: 'active' },
   lastCheckIn: { type: Date, default: Date.now },
   //shareToken: { type: String, unique: true }, // For view-only access
   lastKnownLocation: {
