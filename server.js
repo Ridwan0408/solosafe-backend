@@ -36,7 +36,7 @@ app.set('trust proxy', 1);
 
 // Middleware
 app.use(cors({
-    origin: "*", // replace "*" with your frontend URL in production
+    origin: "http://127.0.0.1:5500", // replace "*" with your frontend URL in production
     credentials: true,
 }));
 app.use(helmet({
