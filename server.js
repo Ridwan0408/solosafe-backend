@@ -35,10 +35,19 @@ app.set('trust proxy', 1);
 // locationSync(io);
 
 // Middleware
+const allowedOrigins = [ 'http://127.0.0.1:5500', process.env.CLIENT_URL ]; 
+
 app.use(cors({
-    origin: "http://127.0.0.1:5500", // replace "*" with your frontend URL in production
-    credentials: true,
-}));
+    origin: function (origin, callback) { 
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true); 
+        } else {
+            callback(new Error('Not allowed by CORS')); 
+        } },
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], 
+        allowedHeaders: ['Content-Type', 'Authorization']
+    }));
+
 app.use(helmet({
     contentSecurityPolicy: false,
     permissionsPolicy: {
