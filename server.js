@@ -38,9 +38,6 @@ app.set('trust proxy', 1);
 app.use(cors({
     origin: "*", // replace "*" with your frontend URL in production
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    exposedHeaders: ["set-cookie"]
 }));
 app.use(helmet({
     contentSecurityPolicy: false,
