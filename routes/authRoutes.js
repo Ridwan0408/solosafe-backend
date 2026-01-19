@@ -2,7 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
 const passport = require('passport');
-const auth = require('../middleware/auth');
+const { auth } = require('../middleware/auth');
 const { register, login, logout, forgotPassword, getMe} = require('../controllers/authControllers');
 
 // @route   POST api/auth/register
