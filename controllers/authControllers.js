@@ -92,6 +92,26 @@ exports.logout = (req, res) => {
         res.status(200).json({ message: 'Logout successful' });
     // });
 };
+// @desc    Get current logged in user profile
+// @route   GET /api/auth/me
+exports.getMe = async (req, res) => {
+    try {
+        // Find the user by ID and exclude the password from the results
+        const user = await User.findById(req.userId).select('-password');
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json({
+            id: user._id,
+            name: user.name,
+            email: user.email
+        });
+    } catch (err) {
+        res.status(500).json({ error: 'Server error', message: err.message });
+    }
+};
 
 // Forgot Password - Generate Reset Token
 exports.forgotPassword = async (req, res) => {

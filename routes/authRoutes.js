@@ -2,7 +2,8 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
 const passport = require('passport');
-const { register, login, logout, forgotPassword} = require('../controllers/authControllers');
+const auth = require('../middleware/auth');
+const { register, login, logout, forgotPassword, getMe} = require('../controllers/authControllers');
 
 // @route   POST api/auth/register
 // @desc    Register a new solo traveler
@@ -10,6 +11,7 @@ router.route('/register').post(register);
 router.route('/login').post(login);
 router.route('/logout').post(logout);
 router.route('/forgot-password').post(forgotPassword);
+router.route('/profile').get(auth, getMe);
 
 router.route('/google').get(passport.authenticate('google', { scope: ['profile', 'email'], state: true}));
 router.get('/google/callback',
@@ -23,6 +25,7 @@ router.get('/google/callback',
         { expiresIn: '1d' }
       );
       res.redirect(`${process.env.CLIENT_URL}/dashboard.html?token=${token}`);
+
       // req.session.regenerate(err => {
       // if (err) {
       //   console.error('Session regeneration error:', err);  
